@@ -1,7 +1,28 @@
 // Import sqlite3 package
 // with .verbose(): more detailed error log. Without .verbose(): less detailed error log. 
 const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+const path = require('path');
+const app = express();
 
+app.set('view engine', 'ejs');
+app.use(express.static('public'));
+// קריאת נתוני הסרטים מקובץ JSON
+const moviesData = JSON.parse(fs.readFileSync('movies.json', 'utf8'));
+
+app.get('/', (req, res) => {
+    let movieCode = req.query.title;
+    if (!movieCode || !moviesData[movieCode]) {
+        return res.status(404).send('Movie not found');
+    }
+    
+    let movie = moviesData[movieCode];
+    res.render('movie', { movie });
+});
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
 // Open the SQLite database (assuming it's in the same directory as the script)
 const db = new sqlite3.Database('rtfilms.db', function(err) {
   if (err) {
@@ -45,17 +66,7 @@ stmt.all(parameters, function(err, results) {
 
 // Finalize the statement after using it
 stmt.finalize();
-app.listen(3001, () => { // Use a different port
-    console.log('Server running on port 3001');
-  });
-  app.get('/', async (req, res) => { 
-    // Code to handle movie details
-  });
-  
-  app.get('/mymovie', (req, res) => {
-    res.redirect(`/?title=${req.query.film}`);
-  });
-  
+
 // Close the database connection after reading the data
 db.close(function(err) {
   if (err) {
