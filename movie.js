@@ -1,12 +1,20 @@
 // Import sqlite3 package
 // with .verbose(): more detailed error log. Without .verbose(): less detailed error log. 
+let express= require('express');
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 const app = express();
-
+const port=3000;
+function longin(req,res){
+    let username=res.query.username;
+    res.render("login",username);
+}
 app.set('view engine', 'ejs');
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname,'public')));
+app.get("/login", login);
+app.listen(PORT);
+console.log('server is listening on port ${port}');
 // קריאת נתוני הסרטים מקובץ JSON
 const moviesData = JSON.parse(fs.readFileSync('movies.json', 'utf8'));
 
@@ -24,7 +32,7 @@ app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 // Open the SQLite database (assuming it's in the same directory as the script)
-const db = new sqlite3.Database('rtfilms.db', function(err) {
+const db = new sqlite3.Database('./rtfilms.db', function(err) {
   if (err) {
     console.error('Error opening database: ' + err.message);
     return;
