@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= movie.name %> - Rancid Tomatoes</title>
+    <link href="/movie.css" type="text/css" rel="stylesheet">
+    <link href="/images/rotten.gif" type="image/gif" rel="shortcut icon" />
+</head>
+<body>
+    <div class="banner">
+        <img src="/images/banner.png" alt="Rancid Tomatoes" />
+    </div>
+    
+    <h1><%= movie.name %> (<%= movie.year %>)</h1>
+
+    <div class="container">
+        <div class="rating-section">
+            <div class="Rating">
+                <img src="/images/<%= movie.rating >= 60 ? 'freshbig.png' : 'rottenbig.png' %>" alt="Rating" />
+                <span><%= movie.rating %>%</span>
+            </div> 
+        </div>  
+
+        <div class="content">
+            <div class="left">
+                <div class="reviews-section">
+                    <% reviews.forEach((review, index) => { %>
+                        <div class="review">
+                            <p>
+                                <img src="/images/<%= review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif' %>" alt="Review Rating" />
+                                <q><%= review.text %></q>
+                            </p>
+                        </div>
+                        <div class="review-left">
+                            <p>
+                                <img src="/images/critic.gif" alt="Critic" />
+                                <%= review.critic_name %> <br />
+                                <%= review.publication %>
+                            </p>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+
+            <div class="right">
+                <div>
+                    <img src="/movies/<%= movie.code %>/poster.jpg" alt="Movie Poster">
+                </div>
+                <div class="right-cont">
+                    <dl>
+                        <dt>Starring</dt>
+                        <dd><%= movie.starring.replace(/,/g, '<br>') %></dd>
+
+                        <dt>Genre</dt>
+                        <dd><%= movie.genre %></dd>
+
+                        <dt>Runtime</dt>
+                        <dd><%= movie.runtime %> minutes</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        (1-<%= reviews.length %>) of <%= reviews.length %>
+    </div>
+</body>
+</html>
