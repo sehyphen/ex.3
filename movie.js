@@ -1,85 +1,73 @@
-// Import sqlite3 package
-// with .verbose(): more detailed error log. Without .verbose(): less detailed error log. 
-let express= require('express');
+const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
 const path = require('path');
 const app = express();
-const port=3000;
-function longin(req,res){
-    let username=res.query.username;
-    res.render("login",username);
-}
-app.set('view engine', 'ejs');
-app.use(express.static(path.join(__dirname,'public')));
-app.get("/login", login);
-app.listen(PORT);
-console.log('server is listening on port ${port}');
-// קריאת נתוני הסרטים מקובץ JSON
-const moviesData = JSON.parse(fs.readFileSync('movies.json', 'utf8'));
+const port = 3000;
 
+// Middleware to serve static files
+app.use(express.static('public'));
+
+// Route to handle movie requests
 app.get('/', (req, res) => {
-    let movieCode = req.query.title;
-    if (!movieCode || !moviesData[movieCode]) {
-        return res.status(404).send('Movie not found');
+    let movie = req.query.title;
+    if (!movie) {
+        return res.status(400).send("Missing movie title");
     }
     
-    let movie = moviesData[movieCode];
-    res.render('movie', { movie });
+    let dbPath = path.join(__dirname, 'db', 'rtfilms.db');
+    let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY);
+
+    db.get("SELECT title, rating, poster FROM movies WHERE code = ?", [movie], (err, row) => {
+        if (err) {
+            res.status(500).send("Database error");
+            return;
+        }
+        if (!row) {
+            res.status(404).send("Movie not found");
+            return;
+        }
+        
+        db.all("SELECT reviewer, review_text, rating FROM reviews WHERE movie_code = ?", [movie], (err, reviews) => {
+            if (err) {
+                res.status(500).send("Database error");
+                return;
+            }
+            
+            let freshImage = row.rating >= 60 ? "freshbig.png" : "rottenbig.png";
+            let posterPath = `${movie}/poster.png`;
+            
+            let reviewHtml = reviews.map((r, i) => {
+                let img = r.rating === "FRESH" ? "fresh.gif" : "rotten.gif";
+                return `<div class="review"><img src="${img}" alt="Rating"> <p><strong>${r.reviewer}</strong>: ${r.review_text}</p></div>`;
+            });
+            
+            let leftReviews = reviewHtml.slice(0, Math.ceil(reviewHtml.length / 2)).join('');
+            let rightReviews = reviewHtml.slice(Math.ceil(reviewHtml.length / 2)).join('');
+            
+            res.send(`
+                <html>
+                <head>
+                    <title>Tomatoes Rancid</title>
+                    <link rel="stylesheet" href="styles.css">
+                </head>
+                <body>
+                    <h1>${row.title}</h1>
+                    <img src="${posterPath}" alt="Poster">
+                    <img src="${freshImage}" alt="Freshness">
+                    <div class="reviews-container">
+                        <div class="reviews left">${leftReviews}</div>
+                        <div class="reviews right">${rightReviews}</div>
+                    </div>
+                    <footer>${reviews.length} of ${reviews.length - 1}</footer>
+                </body>
+                </html>
+            `);
+        });
+    });
+
+    db.close();
 });
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
-// Open the SQLite database (assuming it's in the same directory as the script)
-const db = new sqlite3.Database('./rtfilms.db', function(err) {
-  if (err) {
-    console.error('Error opening database: ' + err.message);
-    return;
-  }
-  console.log('Connected to the RTfilms SQLite database.');
-});
 
-// Prepare a query 
-const query = 'SELECT * FROM films WHERE FilmCode = ? OR Year = ?';
-
-// Prepare the statement
-const stmt = db.prepare(query);
-
-  
-// the search parameters to be planted in the ? placeholder, the first for filmcode, and second for year
-let parameters = ["LOTR2001", "1993"];
-
-// results: the results of the query
-stmt.all(parameters, function(err, results) {
-  if (err) {
-    console.error('Error reading data: ' + err.message);
-    return;
-  }
-  
-  // Loop through the results and print FilmCode and Title
-  console.log('Films:');
-  
-  results.forEach(function(row) {
-    console.log(row.FilmCode + '\t' + row.Title + '\t' + row.Year);
-  });
-  
-  /**  same as:
-  for (let row of results){
-    console.log(row.FilmCode + '\t' + row.Title + '\t' + row.Year);
-  }
-  **/
-
-});
-
-// Finalize the statement after using it
-stmt.finalize();
-
-// Close the database connection after reading the data
-db.close(function(err) {
-  if (err) {
-    console.error('Error closing database: ' + err.message);
-    return;
-  }
-  console.log('Closed the database connection.');
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
 });
