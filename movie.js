@@ -59,7 +59,7 @@ app.get('/', (req, res) => {
         }
 
         if (!row) {
-            console.log("No movie found with title: ${movie}");
+            console.log('No movie found with title: ${movie}');
             return res.send(`
                 <html>
                 <head><title>Movie Not Found</title></head>
@@ -100,9 +100,9 @@ app.get('/', (req, res) => {
             // חיפוש תמונת פוסטר
             let posterPath = "default_poster.jpg"; // תמונה ברירת מחדל
             if (fs.existsSync(path.join(__dirname, 'public', normalizedMovie, 'poster.png'))) {
-                posterPath = "${normalizedMovie}/poster.png";
+                posterPath = '${normalizedMovie}/poster.png';
             } else if (fs.existsSync(path.join(__dirname, 'public', normalizedMovie, 'poster.jpg'))) {
-                posterPath = "${normalizedMovie}/poster.jpg";
+                posterPath = '${normalizedMovie}/poster.jpg';
             }
 
             res.send(`
@@ -126,12 +126,12 @@ app.get('/', (req, res) => {
                     <p><strong>Runtime:</strong> ${row.runtime} mins</p>
                     <p><strong>Genre:</strong> ${genre}</p>
                     <p><strong>Box Office:</strong> $${row.box_office} million</p>
-                    
+
                     <h3>Reviews</h3>
                     <ul>
                         ${reviews.map(review => `
                             <li>
-                                <img src="/images/${review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif'}" alt="Review" />
+                                <img src="/images/${review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif'}" alt="Review" />
                                 <q>${review.review_text}</q> - ${review.reviewer}, ${review.publication}
                             </li>
                         `).join('')}
@@ -139,7 +139,7 @@ app.get('/', (req, res) => {
                     
                     <h3>Links</h3>
                     <ul>
-                    ${links.map(link => <li><a href="${link.url}" target="_blank">${link.text}</a></li>).join('')}
+                        ${links.map(link => <li><a href="${link.url}" target="_blank">${link.text}</a></li>).join('')}
                     </ul>
                 </body>
                 </html>
@@ -150,6 +150,6 @@ app.get('/', (req, res) => {
 
 // הפעלת השרת
 app.listen(port, () => {
-    console.log("Server running on http://localhost:${port}");
+    console.log('Server running on http://localhost:${port}');
     console.log("Trying to open DB at:", dbPath);
 });
