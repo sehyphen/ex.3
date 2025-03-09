@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
             db.close(); // close the DB connection
             return;
         }
-        
+
         if (!row) {
             return res.send(`
                 <html>
