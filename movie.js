@@ -75,6 +75,16 @@ app.get('/', (req, res) => {
             const starring = row.starring ? row.starring.split(',').join('<br>') : 'N/A';
             const genre = row.genre ? row.genre.split(',').join(', ') : 'N/A';
 
+            // Check if row.links is valid before parsing it as JSON
+            let links = [];
+            try {
+                if (row.links) {
+                    links = JSON.parse(row.links);
+                }
+            } catch (e) {
+                console.error("Error parsing links:", e.message);
+            }
+
             res.send(`
                 <!DOCTYPE html>
                 <html lang="en">
@@ -139,7 +149,7 @@ app.get('/', (req, res) => {
                                         <dt>Links</dt>
                                         <dd>
                                             <ul>
-                                                ${JSON.parse(row.links).map(link => `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`).join('')}
+                                                ${links.map(link => `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`).join('')}
                                             </ul>
                                         </dd>
                                     </dl>
