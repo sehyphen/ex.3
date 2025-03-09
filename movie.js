@@ -1,6 +1,7 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');  // הוספת המודול fs
 const app = express();
 const port = 4000;
 
@@ -22,6 +23,10 @@ let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
 // Route to handle movie requests
 app.get('/', (req, res) => {
     let movie = req.query.title;
+    
+    // Debugging: print out the 'movie' variable to see if it's correct
+    console.log("Movie title from query:", movie);
+    
     if (!movie) {
         return res.send(`
             <html>
@@ -34,7 +39,7 @@ app.get('/', (req, res) => {
         `);
     }
 
-    // Normalize movie title for matching
+    // Normalize movie title for matching (remove spaces for matching)
     const normalizedMovie = movie.toLowerCase().replace(/\s+/g, "");
 
     // Get movie data and reviews in a single query
@@ -46,6 +51,7 @@ app.get('/', (req, res) => {
         }
 
         if (!row) {
+            console.log(`No movie found with title: ${movie}`);
             return res.send(`
                 <html>
                 <head><title>Movie Not Found - Tomatoes Rancid</title></head>
@@ -56,6 +62,9 @@ app.get('/', (req, res) => {
                 </html>
             `);
         }
+
+        // Debugging: print out movie data
+        console.log("Movie data:", row);
 
         // Get movie reviews from REVIEWS table
         db.all("SELECT * FROM REVIEWS WHERE FILMCODE = ?", [row.FILMCODE], (err, reviews) => {
@@ -75,15 +84,20 @@ app.get('/', (req, res) => {
             const starring = row.starring ? row.starring.split(',').join('<br>') : 'N/A';
             const genre = row.genre ? row.genre.split(',').join(', ') : 'N/A';
 
-            // Check if row.links is valid before parsing it as JSON
+            // Ensure 'links' is valid JSON before parsing
             let links = [];
-            try {
-                if (row.links) {
+            if (row.links) {
+                try {
                     links = JSON.parse(row.links);
+                } catch (e) {
+                    console.error("Error parsing JSON in links:", e.message);
                 }
-            } catch (e) {
-                console.error("Error parsing links:", e.message);
             }
+
+            // Define poster image paths (check if .png or .jpg)
+            const posterPath = fs.existsSync(path.join(__dirname, 'public', normalizedMovie, 'poster.png')) 
+                ? `${normalizedMovie}/poster.png` 
+                : `${normalizedMovie}/poster.jpg`;
 
             res.send(`
                 <!DOCTYPE html>
@@ -126,7 +140,7 @@ app.get('/', (req, res) => {
                             </div>
                             <div class="right">
                                 <div>
-                                    <img src="/${normalizedMovie}/poster.png" alt="Movie Poster">
+                                    <img src="/${posterPath}" alt="Movie Poster">
                                 </div>
                                 <div class="movie-info">
                                     <dl>
