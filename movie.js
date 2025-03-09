@@ -1,32 +1,41 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const fs = require('fs');  // הוספת המודול fs
+const fs = require('fs');
+
 const app = express();
 const port = 4000;
 
-// Set database path outside the route so it's accessible everywhere
+// קביעת הנתיב למסד הנתונים
 let dbPath = path.join(__dirname, 'db', 'rtfilms.db');
 
-// Middleware to serve static files
+// Middleware לשירות קבצים סטטיים
 app.use(express.static('public'));
 
-// Open the database outside the route
+// חיבור למסד הנתונים
 let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
     if (err) {
         console.error("Error opening database:", err.message);
-        process.exit(1); // Exit the application if DB connection fails
+        process.exit(1);
     }
     console.log("Connected to the database.");
+
+    // בדיקת חיבור וטעינת טבלאות
+    db.all("SELECT name FROM sqlite_master WHERE type='table'", (err, tables) => {
+        if (err) {
+            console.error("Error retrieving tables:", err.message);
+        } else {
+            console.log("Tables in database:", tables);
+        }
+    });
 });
 
-// Route to handle movie requests
+// נתיב ראשי להצגת מידע על סרטים
 app.get('/', (req, res) => {
     let movie = req.query.title;
     
-    // Debugging: print out the 'movie' variable to see if it's correct
     console.log("Movie title from query:", movie);
-    
+
     if (!movie) {
         return res.send(`
             <html>
@@ -39,10 +48,9 @@ app.get('/', (req, res) => {
         `);
     }
 
-    // Normalize movie title for matching (remove spaces for matching)
+    // התאמת שם הסרט לצורך השוואה
     const normalizedMovie = movie.toLowerCase().replace(/\s+/g, "");
 
-    // Get movie data and reviews in a single query
     db.get("SELECT * FROM FILMS WHERE LOWER(REPLACE(title, ' ', '')) = ?", [normalizedMovie], (err, row) => {
         if (err) {
             console.error("Error querying database:", err.message);
@@ -51,10 +59,10 @@ app.get('/', (req, res) => {
         }
 
         if (!row) {
-            console.log(`No movie found with title: ${movie}`);
+            console.log("No movie found with title: ${movie}");
             return res.send(`
                 <html>
-                <head><title>Movie Not Found - Tomatoes Rancid</title></head>
+                <head><title>Movie Not Found</title></head>
                 <body>
                     <h1>Movie Not Found</h1>
                     <p>We couldn't find the movie "${movie}". Please try another title.</p>
@@ -63,10 +71,8 @@ app.get('/', (req, res) => {
             `);
         }
 
-        // Debugging: print out movie data
         console.log("Movie data:", row);
 
-        // Get movie reviews from REVIEWS table
         db.all("SELECT * FROM REVIEWS WHERE FILMCODE = ?", [row.FILMCODE], (err, reviews) => {
             if (err) {
                 console.error("Error querying reviews:", err.message);
@@ -74,19 +80,16 @@ app.get('/', (req, res) => {
                 return;
             }
 
-            // If no reviews found, display a message
             if (!reviews || reviews.length === 0) {
-                console.log("No reviews found for movie:", row.title);
+                console.log("No reviews found for movie:", row.Title);
                 reviews = [{ review_text: "No reviews available", rating: "FRESH", reviewer: "N/A", publication: "N/A" }];
             }
 
-            // Ensure 'starring' and 'genre' are not undefined before splitting
             const starring = row.starring ? row.starring.split(',').join('<br>') : 'N/A';
             const genre = row.genre ? row.genre.split(',').join(', ') : 'N/A';
 
-            // Ensure 'links' is valid JSON before parsing
             let links = [];
-            if (row.links) {
+            if (row.links && typeof row.links === "string") {
                 try {
                     links = JSON.parse(row.links);
                 } catch (e) {
@@ -94,10 +97,13 @@ app.get('/', (req, res) => {
                 }
             }
 
-            // Define poster image paths (check if .png or .jpg)
-            const posterPath = fs.existsSync(path.join(__dirname, 'public', normalizedMovie, 'poster.png')) 
-                ? `${normalizedMovie}/poster.png` 
-                : `${normalizedMovie}/poster.jpg`;
+            // חיפוש תמונת פוסטר
+            let posterPath = "default_poster.jpg"; // תמונה ברירת מחדל
+            if (fs.existsSync(path.join(__dirname, 'public', normalizedMovie, 'poster.png'))) {
+                posterPath = "${normalizedMovie}/poster.png";
+            } else if (fs.existsSync(path.join(__dirname, 'public', normalizedMovie, 'poster.jpg'))) {
+                posterPath = "${normalizedMovie}/poster.jpg";
+            }
 
             res.send(`
                 <!DOCTYPE html>
@@ -105,75 +111,36 @@ app.get('/', (req, res) => {
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>${row.title} - Tomatoes Rancid</title>
+                    <title>${row.Title} - Tomatoes Rancid</title>
                     <link href="/movie.css" type="text/css" rel="stylesheet">
                     <link href="/images/rotten.gif" type="image/gif" rel="shortcut icon" />
                 </head>
                 <body>
-                    <div class="banner">
-                        <img src="/images/banner.png" alt="Tomatoes Rancid" />
-                    </div>
-                    <h1>${row.title} (${row.year})</h1>
-                    <div class="container">
-                        <div class="rating-section">
-                            <div class="rating">
-                                <img src="/images/${row.rating >= 60 ? 'freshbig.png' : 'rottenbig.png'}" alt="Rating" />
-                                <span>${row.rating}%</span>
-                            </div>
-                        </div>
-                        <div class="content">
-                            <div class="left">
-                                <div class="reviews-section">
-                                    ${reviews.map(review => `
-                                        <div class="review">
-                                            <div class="review-content">
-                                                <img src="/images/${review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif'}" alt="Review" />
-                                                <q>${review.review_text}</q>
-                                            </div>
-                                            <div class="review-details">
-                                                <img src="/images/critic.gif" alt="Critic" />
-                                                <p>${review.reviewer} <br /> ${review.publication}</p>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                            <div class="right">
-                                <div>
-                                    <img src="/${posterPath}" alt="Movie Poster">
-                                </div>
-                                <div class="movie-info">
-                                    <dl>
-                                        <dt>Starring</dt>
-                                        <dd>${starring}</dd>
-                                        <dt>Director</dt>
-                                        <dd>${row.director}</dd>
-                                        <dt>Rating</dt>
-                                        <dd>${row.mpaa_rating}</dd>
-                                        <dt>Theatrical Release</dt>
-                                        <dd>${row.release_date}</dd>
-                                        <dt>Movie Synopsis</dt>
-                                        <dd>${row.synopsis}</dd>
-                                        <dt>Runtime</dt>
-                                        <dd>${row.runtime} mins</dd>
-                                        <dt>Genre</dt>
-                                        <dd>${genre}</dd>
-                                        <dt>Box Office</dt>
-                                        <dd>$${row.box_office} million</dd>
-                                        <dt>Links</dt>
-                                        <dd>
-                                            <ul>
-                                                ${links.map(link => `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`).join('')}
-                                            </ul>
-                                        </dd>
-                                    </dl>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="footer">
-                            (1-${reviews.length} of ${reviews.length})
-                        </div>
-                    </div>
+                    <h1>${row.Title} (${row.Year})</h1>
+                    <img src="/${posterPath}" alt="Movie Poster">
+                    <p><strong>Director:</strong> ${row.director}</p>
+                    <p><strong>Starring:</strong> ${starring}</p>
+                    <p><strong>Rating:</strong> ${row.mpaa_rating}</p>
+                    <p><strong>Release Date:</strong> ${row.release_date}</p>
+                    <p><strong>Synopsis:</strong> ${row.synopsis}</p>
+                    <p><strong>Runtime:</strong> ${row.runtime} mins</p>
+                    <p><strong>Genre:</strong> ${genre}</p>
+                    <p><strong>Box Office:</strong> $${row.box_office} million</p>
+                    
+                    <h3>Reviews</h3>
+                    <ul>
+                        ${reviews.map(review => `
+                            <li>
+                                <img src="/images/${review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif'}" alt="Review" />
+                                <q>${review.review_text}</q> - ${review.reviewer}, ${review.publication}
+                            </li>
+                        `).join('')}
+                    </ul>
+                    
+                    <h3>Links</h3>
+                    <ul>
+                    ${links.map(link => <li><a href="${link.url}" target="_blank">${link.text}</a></li>).join('')}
+                    </ul>
                 </body>
                 </html>
             `);
@@ -181,8 +148,8 @@ app.get('/', (req, res) => {
     });
 });
 
-// Start the server
+// הפעלת השרת
 app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-    console.log("Trying to open DB at:", dbPath);
+    console.log("Server running on http://localhost:${port}");
+    console.log("Trying to open DB at:", dbPath);
 });
