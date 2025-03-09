@@ -2,7 +2,6 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
-
 const app = express();
 const port = 4000;
 
@@ -97,13 +96,13 @@ app.get('/', (req, res) => {
                 }
             }
 
-            // חיפוש תמונת פוסטר
             let posterPath = "default_poster.jpg"; // תמונה ברירת מחדל
             if (fs.existsSync(path.join(__dirname, 'public', normalizedMovie, 'poster.png'))) {
-                posterPath = '${normalizedMovie}/poster.png';
+                posterPath = `${normalizedMovie}/poster.png`; // השתמש ב-backticks להכללת משתנים
             } else if (fs.existsSync(path.join(__dirname, 'public', normalizedMovie, 'poster.jpg'))) {
-                posterPath = '${normalizedMovie}/poster.jpg';
+                posterPath = `${normalizedMovie}/poster.jpg`; // השתמש ב-backticks להכללת משתנים
             }
+            
 
             res.send(`
                 <!DOCTYPE html>
@@ -137,10 +136,13 @@ app.get('/', (req, res) => {
                         `).join('')}
                     </ul>
                     
-                    <h3>Links</h3>
-                    <ul>
-                        ${links.map(link => <li><a href="${link.url}" target="_blank">${link.text}</a></li>).join('')}
-                    </ul>
+                   <h3>Links</h3>
+<ul>
+    ${links.map(link => {
+        return `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`;
+    }).join('')}
+</ul>
+
                 </body>
                 </html>
             `);
@@ -150,6 +152,6 @@ app.get('/', (req, res) => {
 
 // הפעלת השרת
 app.listen(port, () => {
-    console.log('Server running on http://localhost:${port}');
+    console.log(`Server running on http://localhost:${port}`);
     console.log("Trying to open DB at:", dbPath);
 });
