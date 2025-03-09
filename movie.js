@@ -1,96 +1,191 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-
+const fs = require('fs');
 const app = express();
 const port = 4000;
 
-// קביעת הנתיב למסד הנתונים
-let dbPath = path.join(__dirname, 'db', 'rtfilms.db');
-
-// Middleware לשירות קבצים סטטיים (לשירות HTML, CSS, תמונות וכו')
+// Middleware to serve static files
 app.use(express.static('public'));
 
-// נתיב ראשי להצגת דף הבית
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Connect to the database
+const dbPath = path.join(__dirname, 'db', 'rtfilms.db');
+const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+        console.error("Error opening database:", err.message);
+        process.exit(1); // Exit the application if DB connection fails
+    }
+    console.log("Connected to the database.");
 });
 
-// נתיב לחיפוש סרטים
-app.get('/movie', (req, res) => {
-    let movie = req.query.title;
+// Route to handle movie requests
+app.get('/', (req, res) => {
+    let movie = req.query.title;  // Correct query parameter: title
+    
+    // Debugging: print out the 'movie' variable to see if it's correct
+    console.log("Movie title from query:", movie);
     
     if (!movie) {
-        return res.sendFile(path.join(__dirname, 'public', 'error.html'));
+        return res.send(`
+            <html>
+            <head><title>Welcome to Tomatoes Rancid</title></head>
+            <body>
+                <h1>Welcome to Tomatoes Rancid</h1>
+                <p>Please provide a movie title in the URL, e.g., <a href="?title=ThePrincessBride">Click here for The Princess Bride</a></p>
+            </body>
+            </html>
+        `);
     }
 
+    // Normalize movie title for matching (remove spaces for matching)
     const normalizedMovie = movie.toLowerCase().replace(/\s+/g, "");
+    console.log("Normalized movie title:", normalizedMovie);  // Debugging
 
-    let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
-        if (err) {
-            console.error("Error opening database:", err.message);
-            return res.status(500).send("Database connection error.");
-        }
-    });
-
+    // Get movie data and reviews in a single query
     db.get("SELECT * FROM FILMS WHERE LOWER(REPLACE(title, ' ', '')) = ?", [normalizedMovie], (err, row) => {
         if (err) {
             console.error("Error querying database:", err.message);
-            db.close();
-            return res.status(500).send("Database query error.");
+            res.status(500).send("Database query error");
+            return;
         }
 
+        // Debugging: Check if the row data is found
         if (!row) {
-            db.close();
-            return res.sendFile(path.join(__dirname, 'public', 'error.html'));
+            console.log(`No movie found with title: ${movie}`);
+            return res.send(`
+                <html>
+                <head><title>Movie Not Found - Tomatoes Rancid</title></head>
+                <body>
+                    <h1>Movie Not Found</h1>
+                    <p>We couldn't find the movie "${movie}". Please try another title.</p>
+                </body>
+                </html>
+            `);
         }
 
+        // Debugging: print out movie data
+        console.log("Movie data:", row);
+
+        // Get movie reviews from REVIEWS table
         db.all("SELECT * FROM REVIEWS WHERE FILMCODE = ?", [row.FILMCODE], (err, reviews) => {
             if (err) {
                 console.error("Error querying reviews:", err.message);
-                db.close();
-                return res.status(500).send("Error fetching reviews.");
+                res.status(500).send("Error fetching reviews");
+                return;
             }
 
-            db.close();
+            // Debugging: Check if reviews are returned
+            console.log("Reviews for movie:", reviews);
 
-            // יצירת עמוד HTML דינמי
-            let htmlContent = `
+            // If no reviews found, display a message
+            if (!reviews || reviews.length === 0) {
+                console.log("No reviews found for movie:", row.title);
+                reviews = [{ review_text: "No reviews available", rating: "FRESH", reviewer: "N/A", publication: "N/A" }];
+            }
+
+            // Ensure 'starring' and 'genre' are not undefined before splitting
+            const starring = row.starring ? row.starring.split(',').join('<br>') : 'N/A';
+            const genre = row.genre ? row.genre.split(',').join(', ') : 'N/A';
+
+            // Ensure 'links' is valid JSON before parsing
+            let links = [];
+            if (row.links) {
+                try {
+                    links = JSON.parse(row.links);
+                } catch (e) {
+                    console.error("Error parsing JSON in links:", e.message);
+                }
+            }
+
+            // Define poster image paths (check if .png or .jpg)
+            const posterPath = fs.existsSync(path.join(__dirname, 'public', normalizedMovie, 'poster.png')) 
+                ? `${normalizedMovie}/poster.png` 
+                : `${normalizedMovie}/poster.jpg`;
+
+            res.send(`
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>${row.Title} - Tomatoes Rancid</title>
-                    <link rel="stylesheet" href="/movie.css">
+                    <title>${row.title} - Tomatoes Rancid</title>
+                    <link href="/movie.css" type="text/css" rel="stylesheet">
+                    <link href="/images/rotten.gif" type="image/gif" rel="shortcut icon" />
                 </head>
                 <body>
-                    <h1>${row.Title} (${row.Year})</h1>
-                    <img src="/images/${row.FILMCODE}.jpg" alt="${row.Title} Poster">
-
-                    <p><strong>Director:</strong> ${row.director}</p>
-                    <p><strong>Genre:</strong> ${row.genre}</p>
-                    <p><strong>Box Office:</strong> $${row.box_office} million</p>
-
-                    <h3>Reviews</h3>
-                    <ul>
-                        ${reviews.map(review => `
-                            <li>
-                                <img src="/images/${review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif'}" alt="Review">
-                                <q>${review.review_text}</q> - ${review.reviewer}, ${review.publication}
-                            </li>
-                        `).join('')}
-                    </ul>
+                    <div class="banner">
+                        <img src="/images/banner.png" alt="Tomatoes Rancid" />
+                    </div>
+                    <h1>${row.title} (${row.year})</h1>
+                    <div class="container">
+                        <div class="rating-section">
+                            <div class="rating">
+                                <img src="/images/${row.rating >= 60 ? 'freshbig.png' : 'rottenbig.png'}" alt="Rating" />
+                                <span>${row.rating}%</span>
+                            </div>
+                        </div>
+                        <div class="content">
+                            <div class="left">
+                                <div class="reviews-section">
+                                    ${reviews.map(review => `
+                                        <div class="review">
+                                            <div class="review-content">
+                                                <img src="/images/${review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif'}" alt="Review" />
+                                                <q>${review.review_text}</q>
+                                            </div>
+                                            <div class="review-details">
+                                                <img src="/images/critic.gif" alt="Critic" />
+                                                <p>${review.reviewer} <br /> ${review.publication}</p>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="right">
+                                <div>
+                                    <img src="/${posterPath}" alt="Movie Poster">
+                                </div>
+                                <div class="movie-info">
+                                    <dl>
+                                        <dt>Starring</dt>
+                                        <dd>${starring}</dd>
+                                        <dt>Director</dt>
+                                        <dd>${row.director}</dd>
+                                        <dt>Rating</dt>
+                                        <dd>${row.mpaa_rating}</dd>
+                                        <dt>Theatrical Release</dt>
+                                        <dd>${row.release_date}</dd>
+                                        <dt>Movie Synopsis</dt>
+                                        <dd>${row.synopsis}</dd>
+                                        <dt>Runtime</dt>
+                                        <dd>${row.runtime} mins</dd>
+                                        <dt>Genre</dt>
+                                        <dd>${genre}</dd>
+                                        <dt>Box Office</dt>
+                                        <dd>$${row.box_office} million</dd>
+                                        <dt>Links</dt>
+                                        <dd>
+                                            <ul>
+                                            ${links.map(link => `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`).join('')}
+                                            </ul>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="footer">
+                            (1-${reviews.length} of ${reviews.length})
+                        </div>
+                    </div>
                 </body>
                 </html>
-            `;
-
-            res.send(htmlContent);
+            `);
         });
     });
 });
 
-// הפעלת השרת
+// Start the server
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
+    console.log("Trying to open DB at:", dbPath);
 });

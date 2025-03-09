@@ -3,50 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Princess Bride (1987) - Reviews</title>
-    <link rel="stylesheet" href="styles.css">
+    <title><%= movie.Title %> - Reviews</title>
+    <link rel="stylesheet" href="/movie.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>The Princess Bride (1987)</h1>
-        </header>
-        
-        <section class="score">
-            <div class="score-box">
-                <img src="rotten_tomatoes_logo.png" alt="Rotten Tomatoes Logo">
-                <h2>95% <span>FRESH</span></h2>
-            </div>
-        </section>
-        
-        <section class="reviews">
-            <h3>Critics Reviews</h3>
-            <table class="reviews-table">
-                <tr>
-                    <td><img src="fresh.png" alt="Fresh" class="icon"></td>
-                    <td><q>One of fiction's most entertaining films, effective as fable and satire.</q> <br> <span>- Anonymous</span></td>
-                </tr>
-                <tr>
-                    <td><img src="fresh.png" alt="Fresh" class="icon"></td>
-                    <td><q>An affectionate comedy with endless quotable lines.</q> <br> <span>- Jane Trent</span></td>
-                </tr>
-                <tr>
-                    <td><img src="fresh.png" alt="Fresh" class="icon"></td>
-                    <td><q>The lesson is most effectively dramatized: true love will always win.</q> <br> <span>- John Adams</span></td>
-                </tr>
-            </table>
-        </section>
-        
-        <section class="movie-info">
-            <h3>General Overview</h3>
-            <table class="info-table">
-                <tr><td><strong>Director:</strong></td><td>Rob Reiner</td></tr>
-                <tr><td><strong>Starring:</strong></td><td>Cary Elwes, Robin Wright, Mandy Patinkin</td></tr>
-                <tr><td><strong>Genre:</strong></td><td>Adventure, Comedy, Fantasy</td></tr>
-                <tr><td><strong>Release Date:</strong></td><td>1987</td></tr>
-                <tr><td><strong>Box Office:</strong></td><td>$30.8 million</td></tr>
-            </table>
-        </section>
-    </div>
+    <header>
+        <img src="/<%= movie.Title.toLowerCase().replace(/\s+/g, '') %>/poster2.png" class="banner" alt="Movie Poster">
+        <h1><%= movie.Title %> (<%= movie.Year %>)</h1>
+    </header>
+
+    <section class="score">
+        <img src="/images/<%= movie.Score >= 60 ? 'freshbig.png' : 'rottenbig.png' %>" alt="Score">
+        <h2><%= movie.Score %>% <span><%= movie.Score >= 60 ? 'FRESH' : 'ROTTEN' %></span></h2>
+    </section>
+
+    <section class="reviews">
+        <h3>Critics Reviews</h3>
+        <div class="reviews-container">
+            <% if (reviews.length > 0) { %>
+                <% reviews.forEach(review => { %>
+                    <div class="review">
+                        <img src="/images/<%= review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif' %>" class="icon" alt="Review Icon">
+                        <p><q><%= review.review_text %></q></p>
+                        <span>- <%= review.reviewer %>, <%= review.publication %></span>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <p>No reviews available for this movie.</p>
+            <% } %>
+        </div>
+    </section>
+    
+    <section class="movie-info">
+        <h3>General Overview</h3>
+        <ul>
+            <li><strong>Director:</strong> <%= movie.director %></li>
+            <li><strong>Starring:</strong> <%= movie.starring %></li>
+            <li><strong>Genre:</strong> <%= movie.genre %></li>
+            <li><strong>Release Date:</strong> <%= movie.release_date %></li>
+            <li><strong>Box Office:</strong> $<%= movie.box_office %> million</li>
+        </ul>
+    </section>
 </body>
 </html>
