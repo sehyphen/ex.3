@@ -1,13 +1,13 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
+
 const app = express();
 const port = 4000;
 
-// Middleware to serve static files
 app.use(express.static('public'));
 
-// Route to handle movie requests
 app.get('/', (req, res) => {
     let movie = req.query.title;
     if (!movie) {
@@ -21,10 +21,8 @@ app.get('/', (req, res) => {
             </html>
         `);
     }
-    
-    // Normalize movie title for matching
+
     const normalizedMovie = movie.toLowerCase().replace(/\s+/g, "");
-    
     let dbPath = path.join(__dirname, 'db', 'rtfilms.db');
     let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY);
 
@@ -44,13 +42,24 @@ app.get('/', (req, res) => {
                 </html>
             `);
         }
-        
-        db.all("SELECT * FROM reviews WHERE movie_code = ?", [normalizedMovie], (err, reviews) => {
+
+        let posterPathPng = `/${normalizedMovie}/poster.png`;
+        let posterPathJpg = `/${normalizedMovie}/poster.jpg`;
+        let posterPath = fs.existsSync(path.join(__dirname, 'public', posterPathPng)) ? posterPathPng : posterPathJpg;
+
+        db.all("SELECT * FROM reviews WHERE movie_code = ?", [row.code], (err, reviews) => {
             if (err) {
                 res.status(500).send("Database error");
                 return;
             }
-            
+
+            let links = [];
+            try {
+                links = JSON.parse(row.links) || [];
+            } catch (e) {
+                links = [];
+            }
+
             res.send(`
                 <!DOCTYPE html>
                 <html lang="en">
@@ -92,7 +101,7 @@ app.get('/', (req, res) => {
                             </div>
                             <div class="right">
                                 <div>
-                                    <img src="/${normalizedMovie}/poster.png" alt="Movie Poster">
+                                    <img src="${posterPath}" alt="Movie Poster">
                                 </div>
                                 <div class="movie-info">
                                     <dl>
@@ -115,7 +124,7 @@ app.get('/', (req, res) => {
                                         <dt>Links</dt>
                                         <dd>
                                             <ul>
-                                                ${JSON.parse(row.links).map(link => `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`).join('')}
+                                                ${links.map(link => `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`).join('')}
                                             </ul>
                                         </dd>
                                     </dl>
@@ -133,6 +142,7 @@ app.get('/', (req, res) => {
     });
     db.close();
 });
+
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
 });
