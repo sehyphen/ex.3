@@ -4,6 +4,9 @@ const path = require('path');
 const app = express();
 const port = 4000;
 
+// Set database path outside the route so it's accessible everywhere
+let dbPath = path.join(__dirname, 'db', 'rtfilms.db');
+
 // Middleware to serve static files
 app.use(express.static('public'));
 
@@ -24,9 +27,6 @@ app.get('/', (req, res) => {
 
     // Normalize movie title for matching
     const normalizedMovie = movie.toLowerCase().replace(/\s+/g, "");
-
-    // Set database path
-    let dbPath = path.join(__dirname, 'db', 'rtfilms.db');
 
     // Open the database
     let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
