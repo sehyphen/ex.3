@@ -200,30 +200,37 @@ app.get("/", (req, res) => {
                                     <img src="/${posterPath}" alt="Movie Poster">
                                 </div>
                                 <div class="movie-info">
-                                    <dl>
-                                        <dt>Starring</dt>
-                                        <dd>${starring}</dd>
-                                        <dt>Director</dt>
-                                        <dd>${row.director}</dd>
-                                        <dt>Rating</dt>
-                                        <dd>${row.mpaa_rating}</dd>
-                                        <dt>Theatrical Release</dt>
-                                        <dd>${row.release_date}</dd>
-                                        <dt>Synopsis</dt>
-                                        <dd>${row.synopsis}</dd>
-                                        <dt>Runtime</dt>
-                                        <dd>${runtime}</dd>
-                                        <dt>Genre</dt>
-                                        <dd>${genre}</dd>
-                                        <dt>Box Office</dt>
-                                        <dd>${boxOffice}</dd>
-                                        <dt>Links</dt>
-                                        <dd>
-                                            <ul>
-                                                ${links.map(link => `<li><a href="${link.url}" target="_blank">${link.text}</a></li>`).join('')}
-                                            </ul>
-                                        </dd>
-                                    </dl>
+    <dl>
+        <dt>Starring</dt>
+        <dd>Cary Elwes, Robin Wright, André the Giant, Mandy Patinkin</dd>
+
+        <dt>Director</dt>
+        <dd>Rob Reiner</dd>
+
+        <dt>Producer</dt>
+        <dd>Arnold Scheinman, Rob Reiner</dd>
+
+        <dt>Screenwriter</dt>
+        <dd>William Goldman</dd>
+
+        <dt>Rating</dt>
+        <dd>PG</dd>
+
+        <dt>Release Date</dt>
+        <dd>September 25, 1987 (USA)</dd>
+
+        <dt>Runtime</dt>
+        <dd>98 min</dd>
+
+        <dt>Synopsis</dt>
+        <dd>Director Rob Reiner breathes vividly colored cinematic life into William Goldman's <i>The Princess Bride</i>, effectively evoking the wondrous, wide-eyed spirit of the witty 1973 novel.</dd>
+
+        <dt>Release Company</dt>
+        <dd>20th Century Fox</dd>
+    </dl>
+</div>
+
+                                   
                                 </div>
                             </div>
                         </div>
