@@ -21,18 +21,32 @@ app.get('/', (req, res) => {
             </html>
         `);
     }
-    
+
     // Normalize movie title for matching
     const normalizedMovie = movie.toLowerCase().replace(/\s+/g, "");
-    
-    let dbPath = path.join(__dirname, 'db', 'rtfilms.db');
-    let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY);
 
-    db.get("SELECT * FROM movies WHERE LOWER(REPLACE(title, ' ', '')) = ?", [normalizedMovie], (err, row) => {
+    // Set database path
+    let dbPath = path.join(__dirname, 'db', 'rtfilms.db');
+
+    // Open the database
+    let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
         if (err) {
+            console.error("Error opening database:", err.message);
             res.status(500).send("Database error");
             return;
         }
+        console.log("Connected to the database.");
+    });
+
+    // Get movie data
+    db.get("SELECT * FROM movies WHERE LOWER(REPLACE(title, ' ', '')) = ?", [normalizedMovie], (err, row) => {
+        if (err) {
+            console.error("Error querying database:", err.message);
+            res.status(500).send("Database error");
+            db.close(); // close the DB connection
+            return;
+        }
+        
         if (!row) {
             return res.send(`
                 <html>
@@ -44,13 +58,16 @@ app.get('/', (req, res) => {
                 </html>
             `);
         }
-        
+
+        // Get movie reviews
         db.all("SELECT * FROM reviews WHERE movie_code = ?", [normalizedMovie], (err, reviews) => {
             if (err) {
+                console.error("Error querying reviews:", err.message);
                 res.status(500).send("Database error");
+                db.close(); // close the DB connection
                 return;
             }
-            
+
             res.send(`
                 <!DOCTYPE html>
                 <html lang="en">
@@ -129,10 +146,14 @@ app.get('/', (req, res) => {
                 </body>
                 </html>
             `);
+
+            db.close(); // Close DB connection after completing all queries
         });
     });
-    db.close();
 });
+
+// Start the server
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
+    console.log("Trying to open DB at:", dbPath);
 });
