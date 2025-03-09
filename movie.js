@@ -32,18 +32,18 @@ app.get('/', (req, res) => {
     let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
         if (err) {
             console.error("Error opening database:", err.message);
-            res.status(500).send("Database error");
+            res.status(500).send("Database connection error");
             return;
         }
         console.log("Connected to the database.");
     });
 
-    // Get movie data from FILMS table
+    // Get movie data and reviews in a single query
     db.get("SELECT * FROM FILMS WHERE LOWER(REPLACE(title, ' ', '')) = ?", [normalizedMovie], (err, row) => {
         if (err) {
             console.error("Error querying database:", err.message);
-            res.status(500).send("Database error");
-            db.close(); // close the DB connection
+            res.status(500).send("Database query error");
+            db.close(); // Close the DB connection
             return;
         }
 
@@ -60,12 +60,18 @@ app.get('/', (req, res) => {
         }
 
         // Get movie reviews from REVIEW table
-        db.all("SELECT * FROM REVIEW WHERE movie_code = ?", [normalizedMovie], (err, reviews) => {
+        db.all("SELECT * FROM REVIEW WHERE movie_code = ?", [row.movie_code], (err, reviews) => {
             if (err) {
                 console.error("Error querying reviews:", err.message);
-                res.status(500).send("Database error");
+                res.status(500).send("Error fetching reviews");
                 db.close(); // close the DB connection
                 return;
+            }
+
+            // If no reviews found, display a message
+            if (!reviews || reviews.length === 0) {
+                console.log("No reviews found for movie:", row.title);
+                reviews = [{ review_text: "No reviews available", rating: "FRESH", reviewer: "N/A", publication: "N/A" }];
             }
 
             res.send(`
