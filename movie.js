@@ -2,7 +2,7 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const app = express();
-const port = 3000;
+const port = 4000;
 
 // Middleware to serve static files
 app.use(express.static('public'));
