@@ -3,46 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= movie.Title %> - Reviews</title>
+    <title><%= movie ? movie.Title.replace(/['"]/g, '') : 'Movie' %> - Reviews</title>
+    <meta name="description" content="Read reviews and ratings for <%= movie ? movie.Title : 'this movie' %> (<%= movie ? movie.Year : '' %>). Find out if it's fresh or rotten!">
     <link rel="stylesheet" href="/movie.css">
 </head>
 <body>
     <header>
-        <img src="/<%= movie.Title.toLowerCase().replace(/\s+/g, '') %>/poster2.png" class="banner" alt="Movie Poster">
-        <h1><%= movie.Title %> (<%= movie.Year %>)</h1>
+        <% if (movie) { %>
+            <h1><%= movie.Title %> (<%= movie.Year %>)</h1>
+        <% } else { %>
+            <h1>Movie not found</h1>
+        <% } %>
     </header>
 
+    <% if (movie) { %>
     <section class="score">
         <img src="/images/<%= movie.Score >= 60 ? 'freshbig.png' : 'rottenbig.png' %>" alt="Score">
         <h2><%= movie.Score %>% <span><%= movie.Score >= 60 ? 'FRESH' : 'ROTTEN' %></span></h2>
     </section>
+    <% } %>
 
     <section class="reviews">
         <h3>Critics Reviews</h3>
         <div class="reviews-container">
-            <% if (reviews.length > 0) { %>
-                <% reviews.forEach(review => { %>
-                    <div class="review">
+            <% if (reviews && reviews.length > 0) { %>
+                <% reviews.forEach((review, index) => { %>
+                    <div class="review <%= index % 2 === 0 ? 'left' : 'right' %>">
                         <img src="/images/<%= review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif' %>" class="icon" alt="Review Icon">
                         <p><q><%= review.review_text %></q></p>
-                        <span>- <%= review.reviewer %>, <%= review.publication %></span>
+                        <div class="review-details">
+                            <img src="/images/critic.gif" class="critic-icon" alt="Critic Icon">
+                            <span><%= review.reviewer %>, <%= review.publication %></span>
+                        </div>
                     </div>
                 <% }); %>
             <% } else { %>
-                <p>No reviews available for this movie.</p>
+                <p>No reviews available.</p>
             <% } %>
+            
+            <!-- Added new reviews -->
+            <div class="review left">
+                <img src="/images/fresh.gif" class="icon" alt="Review Icon">
+                <p><q>One of Reiner's most entertaining films, effective as a swashbuckling epic, romantic fable, and satire of these genres.</q></p>
+                <div class="review-details">
+                    <img src="/images/critic.gif" class="critic-icon" alt="Critic Icon">
+                    <span>Emanuel Levy, emanuellevy.com</span>
+                </div>
+            </div>
+            
+            <div class="review right">
+                <img src="/images/rotten.gif" class="icon" alt="Review Icon">
+                <p><q>Based on William Goldman's novel, this is a post-modern fairy tale that challenges and affirms the conventions of a genre that may not be flexible enough to support such horseplay.</q></p>
+                <div class="review-details">
+                    <img src="/images/critic.gif" class="critic-icon" alt="Critic Icon">
+                    <span>Variety Staff, Variety</span>
+                </div>
+            </div>
         </div>
     </section>
     
+    <% if (movie) { %>
     <section class="movie-info">
         <h3>General Overview</h3>
-        <ul>
-            <li><strong>Director:</strong> <%= movie.director %></li>
-            <li><strong>Starring:</strong> <%= movie.starring %></li>
-            <li><strong>Genre:</strong> <%= movie.genre %></li>
-            <li><strong>Release Date:</strong> <%= movie.release_date %></li>
-            <li><strong>Box Office:</strong> $<%= movie.box_office %> million</li>
-        </ul>
+        <div class="movie-content">
+            <div class="movie-details">
+                <ul>
+                    <li><strong>Director:</strong> <%= movie.director %></li>
+                    <li><strong>Starring:</strong> <%= movie.starring %></li>
+                    <li><strong>Genre:</strong> <%= movie.genre %></li>
+                    <li><strong>Release Date:</strong> <%= movie.release_date %></li>
+                    <li><strong>Box Office:</strong> $<%= movie.box_office %> million</li>
+                </ul>
+            </div>
+            <div class="poster">
+                <img src="/<%= encodeURIComponent(movie.Title.toLowerCase().replace(/\s+/g, '')) %>/poster.png" alt="Movie Poster">
+                <img src="/<%= encodeURIComponent(movie.Title.toLowerCase().replace(/\s+/g, '')) %>/poster2.png" alt="Movie Poster 2">
+                <img src="/<%= encodeURIComponent(movie.Title.toLowerCase().replace(/\s+/g, '')) %>/tmnt.png" alt="Movie Poster TMNT">
+            </div>
+            
+        </div>
     </section>
+    <% } %>
+
+    <footer class="footer">
+        <p>(1-<%= reviews ? reviews.length + 2 : 2 %> of <%= reviews ? reviews.length + 2 : 2 %>)</p>
+    </footer>
 </body>
 </html>
