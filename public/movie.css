@@ -1,0 +1,140 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Tahoma, Arial, sans-serif;
+    background: url('/images/background.png') no-repeat center center fixed;
+    background-size: cover;
+}
+
+.banner {
+    background: url('/images/bannerbg.png') repeat-x;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.banner img {
+    height: 100%;
+}
+
+h1 {
+    text-align: center;
+    font-family: Verdana, Calibri, sans-serif;
+    font-size: 3rem;
+    font-weight: bold;
+    color: #000;
+    text-shadow: 2px 2px #999;
+    margin: 1rem 0;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.rating-section {
+    background: url('/images/rbg.png') repeat-x;
+    padding: 1rem;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.rating img {
+    height: 64px;
+}
+
+.rating span {
+    font-size: 2rem;
+    color: #e60606;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.reviews-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.review {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    padding: 1rem;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 0.5rem;
+}
+
+.review-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.review img {
+    height: 32px;
+}
+
+.review-details {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.movie-info {
+    display: grid;
+    gap: 1rem;
+}
+
+.movie-info img {
+    width: 100%;
+    height: auto;
+    border-radius: 15px;
+}
+
+.details dl {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.details dt {
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+
+.footer {
+    background-color: #42642E;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    position: relative;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .content {
+        grid-template-columns: 1fr;
+    }
+    
+    .reviews-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .rating span {
+        font-size: 1.5rem;
+    }
+    
+    h1 {
+        font-size: 2.5rem;
+    }
+}
