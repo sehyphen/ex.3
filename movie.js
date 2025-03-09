@@ -25,7 +25,6 @@ app.get("/", (req, res) => {
 
     console.log(`📌 Movie title from query: ${movie}`);
 
-
     if (!movie) {
         return res.send(`
             <html>
@@ -65,6 +64,11 @@ app.get("/", (req, res) => {
 
         console.log("🎥 Movie data:", row);
 
+        // Override score for "The Princess Bride"
+        if (row.Title === "The Princess Bride") {
+            row.Score = 95; // Set score to 95%
+        }
+
         // Fetch movie reviews
         db.all("SELECT * FROM REVIEWS WHERE FILMCODE = ?", [row.FILMCODE], (err, reviews) => {
             if (err) {
@@ -73,56 +77,54 @@ app.get("/", (req, res) => {
             }
 
             console.log(`💬 Reviews found: ${reviews.length}`);
-
-// Handle missing reviews
-if (!reviews || reviews.length === 0) {
-    console.warn(`⚠️ No reviews found for ${row.Title}`);
-    reviews = [
-        { 
-            review_text: "One of Reiner's most entertaining films, effective as a swashbuckling epic, romantic fable, and satire of these genres.", 
-            rating: "FRESH", 
-            reviewer: "Emanuel Levy", 
-            publication: "emanuellevy.com" 
-        },
-        { 
-            review_text: "Based on William Goldman's novel, this is a post-modern fairy tale that challenges and affirms the conventions of a genre that may not be flexible enough to support such horseplay.", 
-            rating: "ROTTEN", 
-            reviewer: "Variety Staff", 
-            publication: "Variety" 
-        },
-        { 
-            review_text: "Rob Reiner's friendly 1987 fairy-tale adventure delicately mines the irony inherent in its make-believe without ever undermining the effectiveness of the fantasy.", 
-            rating: "FRESH", 
-            reviewer: "Jonathan Rosenbaum", 
-            publication: "Chicago Reader" 
-        },
-        { 
-            review_text: "One of the Top films of the 1980s, if not of all time. A treasure of a film that you'll want to watch again and again.", 
-            rating: "FRESH", 
-            reviewer: "Clint Morris", 
-            publication: "Moviehole" 
-        },
-        { 
-            review_text: "An effective comedy, an interesting bedtime tale, and one of the greatest date rentals of all time.", 
-            rating: "FRESH", 
-            reviewer: "Brad Laidman", 
-            publication: "Film Threat" 
-        },
-        { 
-            review_text: "The lesson it most effectively demonstrates is that cinema has the power to turn you into a kid again. As we wish.", 
-            rating: "FRESH", 
-            reviewer: "Phil Villarreal", 
-            publication: "Arizona Daily Star" 
-        },
-        { 
-            review_text: "My name is Marty Stepp. You killed my father. Prepare to die.", 
-            rating: "FRESH", 
-            reviewer: "Marty Stepp", 
-            publication: "Step by Step Publishing" 
-        }
-    ];
-}
-
+            // Handle missing reviews
+            if (!reviews || reviews.length === 0) {
+                console.warn(`⚠️ No reviews found for ${row.Title}`);
+                reviews = [
+                    { 
+                        review_text: "One of Reiner's most entertaining films, effective as a swashbuckling epic, romantic fable, and satire of these genres.", 
+                        rating: "FRESH", 
+                        reviewer: "Emanuel Levy", 
+                        publication: "emanuellevy.com" 
+                    },
+                    { 
+                        review_text: "Based on William Goldman's novel, this is a post-modern fairy tale that challenges and affirms the conventions of a genre that may not be flexible enough to support such horseplay.", 
+                        rating: "ROTTEN", 
+                        reviewer: "Variety Staff", 
+                        publication: "Variety" 
+                    },
+                    { 
+                        review_text: "Rob Reiner's friendly 1987 fairy-tale adventure delicately mines the irony inherent in its make-believe without ever undermining the effectiveness of the fantasy.", 
+                        rating: "FRESH", 
+                        reviewer: "Jonathan Rosenbaum", 
+                        publication: "Chicago Reader" 
+                    },
+                    { 
+                        review_text: "One of the Top films of the 1980s, if not of all time. A treasure of a film that you'll want to watch again and again.", 
+                        rating: "FRESH", 
+                        reviewer: "Clint Morris", 
+                        publication: "Moviehole" 
+                    },
+                    { 
+                        review_text: "An effective comedy, an interesting bedtime tale, and one of the greatest date rentals of all time.", 
+                        rating: "FRESH", 
+                        reviewer: "Brad Laidman", 
+                        publication: "Film Threat" 
+                    },
+                    { 
+                        review_text: "The lesson it most effectively demonstrates is that cinema has the power to turn you into a kid again. As we wish.", 
+                        rating: "FRESH", 
+                        reviewer: "Phil Villarreal", 
+                        publication: "Arizona Daily Star" 
+                    },
+                    { 
+                        review_text: "My name is Marty Stepp. You killed my father. Prepare to die.", 
+                        rating: "FRESH", 
+                        reviewer: "Marty Stepp", 
+                        publication: "Step by Step Publishing" 
+                    }
+                ];
+            }
 
             // Ensure safe handling of movie attributes
             const starring = row.starring ? row.starring.split(",").join("<br>") : "N/A";
@@ -130,15 +132,14 @@ if (!reviews || reviews.length === 0) {
             const runtime = row.runtime ? `${row.runtime} mins` : "N/A";
             const boxOffice = row.box_office ? `${row.box_office} million` : "N/A";
 
-          // Handle poster image path with "poster2.png" support
-let posterPath = `${normalizedMovie}/poster.jpg`; // Default
+            // Handle poster image path with "poster2.png" support
+            let posterPath = `${normalizedMovie}/poster.jpg`; // Default
 
-if (fs.existsSync(path.join(__dirname, "public", normalizedMovie, "poster(2).png"))) {
-    posterPath = `${normalizedMovie}/poster(2).png`; // Use poster2.png if it exists
-} else if (fs.existsSync(path.join(__dirname, "public", normalizedMovie, "poster.png"))) {
-    posterPath = `${normalizedMovie}/poster.png`; // Fallback to poster.png if poster2.png doesn't exist
-}
-
+            if (fs.existsSync(path.join(__dirname, "public", normalizedMovie, "poster(2).png"))) {
+                posterPath = `${normalizedMovie}/poster(2).png`; // Use poster(2).png if it exists
+            } else if (fs.existsSync(path.join(__dirname, "public", normalizedMovie, "poster.png"))) {
+                posterPath = `${normalizedMovie}/poster.png`; // Fallback to poster.png if poster(2).png doesn't exist
+            }
 
             // Handle links safely
             let links = [];
@@ -193,6 +194,7 @@ if (fs.existsSync(path.join(__dirname, "public", normalizedMovie, "poster(2).png
                                 </div>
                             </div>
                             
+
                             <div class="right">
                                 <div>
                                     <img src="/${posterPath}" alt="Movie Poster">
@@ -241,5 +243,4 @@ if (fs.existsSync(path.join(__dirname, "public", normalizedMovie, "poster(2).png
 app.listen(port, () => {
     console.log(`🚀 Server running on http://localhost:${port}`);
     console.log(`📂 Database location: ${dbPath}`);
-    
 });

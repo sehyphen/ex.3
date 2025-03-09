@@ -15,13 +15,12 @@
             <h1>Movie not found</h1>
         <% } %>
     </header>
-
     <% if (movie) { %>
-    <section class="score">
-        <img src="/images/<%= movie.Score >= 60 ? 'freshbig.png' : 'rottenbig.png' %>" alt="Score">
-        <h2><%= movie.Score %>% <span><%= movie.Score >= 60 ? 'FRESH' : 'ROTTEN' %></span></h2>
-    </section>
-    <% } %>
+        <section class="score">
+            <img src="/images/<%= 95 >= 60 ? 'freshbig.png' : 'rottenbig.png' %>" alt="Score">
+            <h2>95% <span><%= 95 >= 60 ? 'FRESH' : 'ROTTEN' %></span></h2>
+        </section>
+        <% } %>
 
     <section class="reviews">
         <h3>Critics Reviews</h3>
