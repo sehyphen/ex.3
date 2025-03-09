@@ -38,8 +38,8 @@ app.get('/', (req, res) => {
         console.log("Connected to the database.");
     });
 
-    // Get movie data
-    db.get("SELECT * FROM movies WHERE LOWER(REPLACE(title, ' ', '')) = ?", [normalizedMovie], (err, row) => {
+    // Get movie data from FILMS table
+    db.get("SELECT * FROM FILMS WHERE LOWER(REPLACE(title, ' ', '')) = ?", [normalizedMovie], (err, row) => {
         if (err) {
             console.error("Error querying database:", err.message);
             res.status(500).send("Database error");
@@ -59,8 +59,8 @@ app.get('/', (req, res) => {
             `);
         }
 
-        // Get movie reviews
-        db.all("SELECT * FROM reviews WHERE movie_code = ?", [normalizedMovie], (err, reviews) => {
+        // Get movie reviews from REVIEW table
+        db.all("SELECT * FROM REVIEW WHERE movie_code = ?", [normalizedMovie], (err, reviews) => {
             if (err) {
                 console.error("Error querying reviews:", err.message);
                 res.status(500).send("Database error");
