@@ -10,6 +10,15 @@ let dbPath = path.join(__dirname, 'db', 'rtfilms.db');
 // Middleware to serve static files
 app.use(express.static('public'));
 
+// Open the database outside the route
+let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+        console.error("Error opening database:", err.message);
+        process.exit(1); // Exit the application if DB connection fails
+    }
+    console.log("Connected to the database.");
+});
+
 // Route to handle movie requests
 app.get('/', (req, res) => {
     let movie = req.query.title;
@@ -28,22 +37,11 @@ app.get('/', (req, res) => {
     // Normalize movie title for matching
     const normalizedMovie = movie.toLowerCase().replace(/\s+/g, "");
 
-    // Open the database
-    let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
-        if (err) {
-            console.error("Error opening database:", err.message);
-            res.status(500).send("Database connection error");
-            return;
-        }
-        console.log("Connected to the database.");
-    });
-
     // Get movie data and reviews in a single query
     db.get("SELECT * FROM FILMS WHERE LOWER(REPLACE(title, ' ', '')) = ?", [normalizedMovie], (err, row) => {
         if (err) {
             console.error("Error querying database:", err.message);
             res.status(500).send("Database query error");
-            db.close(); // Close the DB connection
             return;
         }
 
@@ -59,12 +57,11 @@ app.get('/', (req, res) => {
             `);
         }
 
-        // Get movie reviews from REVIEW table
-        db.all("SELECT * FROM REVIEW WHERE movie_code = ?", [row.movie_code], (err, reviews) => {
+        // Get movie reviews from REVIEWS table
+        db.all("SELECT * FROM REVIEWS WHERE FILMCODE = ?", [row.FILMCODE], (err, reviews) => {
             if (err) {
                 console.error("Error querying reviews:", err.message);
                 res.status(500).send("Error fetching reviews");
-                db.close(); // close the DB connection
                 return;
             }
 
@@ -73,6 +70,10 @@ app.get('/', (req, res) => {
                 console.log("No reviews found for movie:", row.title);
                 reviews = [{ review_text: "No reviews available", rating: "FRESH", reviewer: "N/A", publication: "N/A" }];
             }
+
+            // Ensure 'starring' and 'genre' are not undefined before splitting
+            const starring = row.starring ? row.starring.split(',').join('<br>') : 'N/A';
+            const genre = row.genre ? row.genre.split(',').join(', ') : 'N/A';
 
             res.send(`
                 <!DOCTYPE html>
@@ -120,7 +121,7 @@ app.get('/', (req, res) => {
                                 <div class="movie-info">
                                     <dl>
                                         <dt>Starring</dt>
-                                        <dd>${row.starring.split(',').join('<br>')}</dd>
+                                        <dd>${starring}</dd>
                                         <dt>Director</dt>
                                         <dd>${row.director}</dd>
                                         <dt>Rating</dt>
@@ -132,7 +133,7 @@ app.get('/', (req, res) => {
                                         <dt>Runtime</dt>
                                         <dd>${row.runtime} mins</dd>
                                         <dt>Genre</dt>
-                                        <dd>${row.genre.split(',').join(', ')}</dd>
+                                        <dd>${genre}</dd>
                                         <dt>Box Office</dt>
                                         <dd>$${row.box_office} million</dd>
                                         <dt>Links</dt>
@@ -152,8 +153,6 @@ app.get('/', (req, res) => {
                 </body>
                 </html>
             `);
-
-            db.close(); // Close DB connection after completing all queries
         });
     });
 });
