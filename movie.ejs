@@ -6,24 +6,24 @@
     <title><%= movie ? movie.Title.replace(/['"]+/g, '') : 'Movie' %> - Reviews</title>
     <meta name="description" content="Read reviews and ratings for <%= movie ? movie.Title : 'this movie' %> (<%= movie ? movie.Year : '' %>).">
     <link rel="stylesheet" href="/movie.css">
-    <link href="./images/rotten.gif" type="image/gif" rel="shortcut icon" />
+    <link rel="shortcut icon" href="/images/<%= movie.Score >= 60 ? 'fresh.gif' : 'rotten.gif' %>" type="image/gif">
 </head>
 <body>
     <div class="banner">
-        <img src="./images/bannerbg.png" alt="Banner">
+        <img src="/images/bannerbg.png" alt="Banner">
     </div>
     
     <h1><%= movie ? movie.Title + ' (' + movie.Year + ')' : 'Movie not found' %></h1>
-    
+
     <% if (movie) { %>
     <div class="Rating">
-        <img src="/images/<%= 95 >= 60 ? 'freshbig.png' : 'rottenbig.png' %>" alt="Score">
-        <span>95% <%= 95 >= 60 ? 'FRESH' : 'ROTTEN' %></span>
+        <img src="/images/<%= movie.Score >= 60 ? 'freshbig.png' : 'rottenbig.png' %>" alt="Score">
+        <span><%= movie.Score %>% <%= movie.Score >= 60 ? 'FRESH' : 'ROTTEN' %></span>
     </div>
     <% } %>
-    
-    <div class="contaniner">
-        <div class="contant">
+
+    <div class="container">
+        <div class="content">
             <section class="reviews-section">
                 <h3>Critics Reviews</h3>
                 <% if (reviews && reviews.length > 0) { %>
@@ -42,7 +42,7 @@
                 <% } %>
             </section>
         </div>
-        
+
         <% if (movie) { %>
         <div class="right">
             <div class="right-cont">
@@ -61,12 +61,12 @@
                 </dl>
             </div>
             <div class="poster">
-                <img src="/images/poster.jpg" alt="Movie Poster">
+                <img src="/images/<%= movie.poster || 'poster.jpg' %>" alt="Movie Poster">
             </div>
         </div>
         <% } %>
     </div>
-    
+
     <footer class="footer">
         <p>(1-<%= reviews ? reviews.length : 0 %> of <%= reviews ? reviews.length : 0 %>)</p>
     </footer>

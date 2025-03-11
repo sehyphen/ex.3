@@ -209,7 +209,7 @@ app.get("/", (req, res) => {
                                 <div class="movie-info">
                                     <dl>
                                         <dt>Starring</dt>
-                                        <dd>${starring}</dd>
+                                        <dd>Cary Elwes,Robin Wright,Andre the Gint,Mandy Patinkin</dd>
 
                                         <dt>Director</dt>
                                         <dd>Rob Reiner</dd>
@@ -227,7 +227,7 @@ app.get("/", (req, res) => {
                                         <dd>September 25, 1987 (USA)</dd>
 
                                         <dt>Runtime</dt>
-                                        <dd>${runtime}</dd>
+                                        <dd>98min</dd>
 
                                         <dt>Synopsis</dt>
                                         <dd>Director Rob Reiner breathes vividly colored cinematic life into William Goldman's <i>The Princess Bride</i>, effectively evoking the wondrous, wide-eyed spirit of the witty 1973 novel.</dd>
