@@ -1,86 +1,89 @@
-<!-- Created By: Mohammed Huleihil, Tasnem Tarabeh, Elinor Khalul --> 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><%= movie.title %> - Rancid Tomatoes</title>
-<link href="/movie.css" type="text/css" rel="stylesheet">
-<link href="/images/rotten.gif" type="image/gif" rel="shortcut icon" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= movie.Title %> - Tomatoes Rancid</title>
+    <link rel="stylesheet" href="/movie.css">
 </head>
-
 <body>
-<div class="banner">
-    <img src="/images/banner.png" alt="Rancid Tomatoes" />
-</div>
-<h1><%= movie.title %> (<%= movie.year %>)</h1>
-
-<div class="container">
-    <div class="rating-section">
-        <div class="Rating">
-            <img src="/images/<%= movie.rating >= 60 ? 'freshbig.png' : 'rottenbig.png' %>" alt="Rating" />
-            <span><%= movie.rating %>%</span>
-        </div> 
-    </div>  
-
-<div class="content">
-    <div class="left">
-        <% movie.reviews.forEach((review) => { %>
-            <div class="reviews-section">
-                <div class="review">
-                    <p>
-                        <img src="/images/<%= review.fresh ? 'fresh.gif' : 'rotten.gif' %>" alt="Review" />
-                        <q><%= review.text %></q>
-                    </p>
-                </div>
-                <div class="review-left">
-                    <p>
-                        <img src="/images/critic.gif" alt="Critic" />
-                        <%= review.critic %> <br />
-                        <%= review.publication %>
-                    </p>
+    <div class="banner">
+        <img src="/images/banner.png" alt="Tomatoes Rancid">
+    </div>
+    <h1><%= movie.Title %> (<%= movie.Year %>)</h1>
+    
+    <div class="container">
+        <div class="rating-section">
+            <div class="rating">
+                <img src="/images/<%= movie.Score >= 60 ? 'freshbig.png' : 'rottenbig.png' %>" alt="Rating">
+                <span><%= movie.Score %>%</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="left">
+                <div class="reviews-section">
+                    <% reviews.forEach(function(review) { %>
+                        <div class="review">
+                            <div class="review-content">
+                                <img src="/images/<%= review.rating === 'FRESH' ? 'fresh.gif' : 'rotten.gif' %>" alt="Review">
+                                <q><%= review.review_text %></q>
+                            </div>
+                            <div class="review-details">
+                                <img src="/images/critic.gif" alt="Critic">
+                                <p><%= review.reviewer %> <br><%= review.publication %></p>
+                            </div>
+                        </div>
+                    <% }); %>
                 </div>
             </div>
-        <% }); %>
-    </div>
 
-    <div class="right">
-        <div>
-            <img src="/movies/<%= movie.folderName %>/poster.png" alt="Movie Poster">
+            <div class="right">
+                <div>
+                    <img src="<%= posterPath %>" alt="Movie Poster">
+                </div>
+            </div>
+
+            <div class="movie-info">
+                <dl>
+                    <dt>Starring</dt>
+                    <dd><%= movie.starring || 'N/A' %></dd>
+
+                    <dt>Director</dt>
+                    <dd><%= movie.director || 'N/A' %></dd>
+
+                    <dt>Producer</dt>
+                    <dd><%= movie.producer || 'N/A' %></dd>
+
+                    <dt>Screenwriter</dt>
+                    <dd><%= movie.screenwriter || 'N/A' %></dd>
+
+                    <dt>Rating</dt>
+                    <dd><%= movie.rating || 'N/A' %></dd>
+
+                    <dt>Release Date</dt>
+                    <dd><%= movie.releaseDate || 'N/A' %></dd>
+
+                    <dt>Runtime</dt>
+                    <dd><%= movie.runtime || 'N/A' %></dd>
+
+                    <dt>Synopsis</dt>
+                    <dd><%= movie.synopsis || 'N/A' %></dd>
+
+                    <dt>Release Company</dt>
+                    <dd><%= movie.releaseCompany || 'N/A' %></dd>
+                </dl>
+            </div>
         </div>
-        <div class="right-cont">
-            <dl>
-                <dt>Starring</dt>
-                <dd><%= movie.starring.join('<br>') %></dd>
-                <dt>Director</dt>
-                <dd><%= movie.director %></dd>
-                <dt>Rating</dt>
-                <dd><%= movie.mpaa_rating %></dd>
-                <dt>Theatrical Release</dt>
-                <dd><%= movie.release_date %></dd>
-                <dt>Movie Synopsis</dt>
-                <dd><%= movie.synopsis %></dd>
-                <dt>Runtime</dt>
-                <dd><%= movie.runtime %> mins</dd>
-                <dt>Genre</dt>
-                <dd><%= movie.genre.join(', ') %></dd>
-                <dt>Box Office</dt>
-                <dd>$<%= movie.box_office %> million</dd>
-                <dt>Links</dt>
-                <dd>
-                    <ul>
-                        <% movie.links.forEach(link => { %>
-                            <li><a href="<%= link.url %>" target="_blank"><%= link.text %></a></li>
-                        <% }); %>
-                    </ul>
-                </dd>
-            </dl>
+        
+        <div class="footer">
+            (1-<%= reviews.length %> of <%= reviews.length %>)
         </div>
     </div>
-</div>
-
-<div class="footer">
-    (1-<%= movie.reviews.length %>) of <%= movie.total_reviews %>
-</div>
+    
+    <!-- חיבור לקובץ ה-JS -->
+    <script src="/script.js"></script>
 </body>
+
 </html>
+

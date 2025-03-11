@@ -133,6 +133,7 @@ app.get("/", (req, res) => {
             const boxOffice = row.box_office ? `${row.box_office} million` : "N/A";
 
             let posterPath = "/images/poster2.png"; // Default to poster2.png
+            
 
             // If a dynamic poster exists, override it
             const possiblePosters = ["poster2.png", "tmnt.png", "poster2.jpg", "poster3.jpg", "poster4.jpg", "poster5.jpg", "poster.jpg"];
